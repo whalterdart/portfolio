@@ -1,6 +1,7 @@
 # Portfolio-Dart Monorepo
 
-Este u00e9 um monorepo que contu00e9m o cu00f3digo completo do projeto Portfolio Dart, incluindo o backend (API) e o frontend.
+Este é um monorepo que contém o código completo do projeto Portfolio Dart, incluindo o backend (API) e o frontend.
+
 
 ## Estrutura do Projeto
 
@@ -19,10 +20,10 @@ Este u00e9 um monorepo que contu00e9m o cu00f3digo completo do projeto Portfolio
 - **Material UI**: Biblioteca de componentes UI
 - **TypeScript**: Tipagem estu00e1tica
 
-## Aplicau00e7u00f5es
+## Aplicativos
 
-- **Portfolio**: Exibiu00e7u00e3o pu00fablica de projetos, experiu00eancia e habilidades
-- **Admin**: u00c1rea administrativa protegida por login para gerenciamento de conteu00fado
+- **Portfolio**: Exibição pública de projetos, experiência e habilidades
+- **Admin**: Área administrativa protegida por login para gerenciamento de conteúdo
 
 ## Como Executar
 

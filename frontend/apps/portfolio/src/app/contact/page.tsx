@@ -92,9 +92,13 @@ export default function ContactPage() {
         </Container>
       </Box>
 
-      <ContactSection marginTop="-6" />
+      <Box sx={{ py: { xs: 6, md: 8 } }}>
+        <ContactSection marginTop="-2" />
+      </Box>
       
-      <Footer />
+      <Box sx={{ mt: { xs: 4, md: 6 } }}>
+        <Footer />
+      </Box>
       
       <style jsx global>{`
         @keyframes pulse {
