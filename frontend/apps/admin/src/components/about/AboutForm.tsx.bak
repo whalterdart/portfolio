@@ -1,0 +1,849 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { About } from '@lib/types/about.types';
+import { AboutService } from '@lib/services/about.service';
+
+// Material UI
+import { 
+  Box, 
+  Card, 
+  CardContent, 
+  Typography, 
+  TextField, 
+  Button, 
+  Divider,
+  Grid,
+  IconButton,
+  List,
+  ListItem,
+  ListItemText,
+  Chip,
+  Stack,
+  Alert,
+  LinearProgress,
+  Paper,
+  Avatar,
+  Tab,
+  Tabs
+} from '@mui/material';
+import { 
+  Save as SaveIcon, 
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  School as SchoolIcon,
+  Work as WorkIcon,
+  Code as CodeIcon,
+  Person as PersonIcon
+} from '@mui/icons-material';
+
+const aboutService = new AboutService();
+
+// Interface TabPanelProps para os painel de abas
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+// Componente TabPanel para exibir o conteúdo de cada aba
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`about-tabpanel-${index}`}
+      aria-labelledby={`about-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
+
+// Forma inicial do about com valores vazios
+const emptyAbout: About = {
+  title: '',
+  description: '',
+  skills: [],
+  education: [],
+  experience: [],
+  avatar: '',
+  socialLinks: {
+    github: '',
+    linkedin: '',
+    twitter: '',
+    website: '',
+    instagram: ''
+  }
+};
+
+export function AboutForm() {
+  const [about, setAbout] = useState<About>(emptyAbout);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [tabValue, setTabValue] = useState(0);
+  const router = useRouter();
+
+  // Estados para novos itens de educação, experiência e habilidades
+  const [newSkill, setNewSkill] = useState({ name: '', level: 50, category: '' });
+  const [newEducation, setNewEducation] = useState({
+    institution: '',
+    degree: '',
+    field: '',
+    startDate: '',
+    endDate: '',
+    description: ''
+  });
+  const [newExperience, setNewExperience] = useState({
+    company: '',
+    position: '',
+    startDate: '',
+    endDate: '',
+    current: false,
+    description: '',
+    technologies: []
+  });
+  const [newTechnology, setNewTechnology] = useState('');
+
+  // Função para alterar a aba atual
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
+  // Carrega os dados do perfil ao montar o componente
+  useEffect(() => {
+    const fetchAbout = async () => {
+      try {
+        setLoading(true);
+        const data = await aboutService.findAll();
+        if (data && data.length > 0) {
+          setAbout(data[0]);
+        }
+      } catch (err) {
+        setError('Falha ao carregar dados do perfil');
+        console.error('Erro ao carregar perfil:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAbout();
+  }, []);
+
+  // Função para atualização dos campos básicos
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setAbout(prev => {
+      // Se o campo é um campo aninhado de socialLinks
+      if (name.startsWith('socialLinks.')) {
+        const socialField = name.split('.')[1];
+        return {
+          ...prev,
+          socialLinks: {
+            ...prev.socialLinks,
+            [socialField]: value
+          }
+        };
+      }
+      // Caso contrário, atualiza o campo diretamente
+      return { ...prev, [name]: value };
+    });
+  };
+
+  // Função para salvar o perfil
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+      setSuccess(null);
+      
+      let result;
+      if (about.id) {
+        result = await aboutService.update(about.id, about);
+      } else {
+        result = await aboutService.create(about);
+      }
+      
+      setAbout(result);
+      setSuccess('Perfil salvo com sucesso!');
+    } catch (err) {
+      setError('Erro ao salvar o perfil. Tente novamente.');
+      console.error('Erro ao salvar perfil:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Função para adicionar uma nova habilidade
+  const addSkill = () => {
+    if (newSkill.name.trim() === '') {
+      setError('O nome da habilidade é obrigatório');
+      return;
+    }
+    
+    setAbout(prev => ({
+      ...prev,
+      skills: [...prev.skills, { ...newSkill }]
+    }));
+    
+    // Limpa o formulário de nova habilidade
+    setNewSkill({ name: '', level: 50, category: '' });
+    setSuccess('Habilidade adicionada!');
+  };
+
+  // Função para remover uma habilidade
+  const removeSkill = (index: number) => {
+    setAbout(prev => ({
+      ...prev,
+      skills: prev.skills.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Função para adicionar uma nova educação
+  const addEducation = () => {
+    if (newEducation.institution.trim() === '' || newEducation.degree.trim() === '') {
+      setError('Instituição e grau são obrigatórios');
+      return;
+    }
+    
+    setAbout(prev => ({
+      ...prev,
+      education: [...prev.education, { ...newEducation }]
+    }));
+    
+    // Limpa o formulário de nova educação
+    setNewEducation({
+      institution: '',
+      degree: '',
+      field: '',
+      startDate: '',
+      endDate: '',
+      description: ''
+    });
+    setSuccess('Educação adicionada!');
+  };
+
+  // Função para remover uma educação
+  const removeEducation = (index: number) => {
+    setAbout(prev => ({
+      ...prev,
+      education: prev.education.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Função para adicionar uma nova experiência
+  const addExperience = () => {
+    if (newExperience.company.trim() === '' || newExperience.position.trim() === '') {
+      setError('Empresa e cargo são obrigatórios');
+      return;
+    }
+    
+    setAbout(prev => ({
+      ...prev,
+      experience: [...prev.experience, { 
+        ...newExperience,
+        technologies: [...newExperience.technologies] 
+      }]
+    }));
+    
+    // Limpa o formulário de nova experiência
+    setNewExperience({
+      company: '',
+      position: '',
+      startDate: '',
+      endDate: '',
+      current: false,
+      description: '',
+      technologies: []
+    });
+    setSuccess('Experiência adicionada!');
+  };
+
+  // Função para remover uma experiência
+  const removeExperience = (index: number) => {
+    setAbout(prev => ({
+      ...prev,
+      experience: prev.experience.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Função para adicionar uma tecnologia à nova experiência
+  const addTechnology = () => {
+    if (newTechnology.trim() === '') return;
+    
+    setNewExperience(prev => ({
+      ...prev,
+      technologies: [...prev.technologies, newTechnology]
+    }));
+    
+    setNewTechnology('');
+  };
+
+  // Função para remover uma tecnologia da nova experiência
+  const removeTechnology = (index: number) => {
+    setNewExperience(prev => ({
+      ...prev,
+      technologies: prev.technologies.filter((_, i) => i !== index)
+    }));
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ width: '100%' }}>
+        <LinearProgress />
+      </Box>
+    );
+  }
+
+  return (
+    <Card elevation={3} sx={{ overflow: 'visible' }}>
+      <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+        
+        {success && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            {success}
+          </Alert>
+        )}
+
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Tabs 
+            value={tabValue} 
+            onChange={handleTabChange} 
+            aria-label="about tabs"
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ 
+              '& .MuiTab-root': { 
+                minHeight: 64,
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                transition: 'all 0.2s' 
+              },
+              '& .Mui-selected': { 
+                fontWeight: 600,
+                color: 'primary.main' 
+              }
+            }}
+          >
+            <Tab icon={<PersonIcon />} label="Perfil" id="about-tab-0" aria-controls="about-tabpanel-0" />
+            <Tab icon={<CodeIcon />} label="Habilidades" id="about-tab-1" aria-controls="about-tabpanel-1" />
+            <Tab icon={<SchoolIcon />} label="Educação" id="about-tab-2" aria-controls="about-tabpanel-2" />
+            <Tab icon={<WorkIcon />} label="Experiência" id="about-tab-3" aria-controls="about-tabpanel-3" />
+          </Tabs>
+        </Box>
+
+        {/* Aba de Perfil Básico */}
+        <TabPanel value={tabValue} index={0}>
+          <Box display="grid" gridTemplateColumns={
+            {
+              xs: '1fr',
+              md: 'repeat(12, 1fr)'
+            }
+          } gap={3}>
+            <Box gridColumn={{ xs: 'span 12', md: 'span 6' }}>
+              <TextField
+                label="Título/Cargo"
+                name="title"
+                value={about.title}
+                onChange={handleChange}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+              />
+            </Box>            <Grid xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
+              <TextField
+                label="URL do Avatar"
+                name="avatar"
+                value={about.avatar || ''}
+                onChange={handleChange}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+                placeholder="https://exemplo.com/avatar.jpg"
+              />
+              {about.avatar && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                  <Avatar 
+                    src={about.avatar} 
+                    alt="Preview do Avatar" 
+                    sx={{ 
+                      width: 100, 
+                      height: 100, 
+                      border: '2px solid', 
+                      borderColor: 'primary.main',
+                      boxShadow: 3
+                    }} 
+                  />
+                </Box>
+              )}
+            </Box>            <Box gridColumn="span 12">
+              <TextField
+                label="Descrição"
+                name="description"
+                value={about.description}
+                onChange={handleChange}
+                fullWidth
+                multiline
+                rows={4}
+                margin="normal"
+                variant="outlined"
+              />
+            </Box>            
+            <Box gridColumn="span 12">
+              <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
+                Links Sociais
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+            </Box>            
+            <Box gridColumn={{ xs: 'span 12', md: 'span 6' }}>
+              <TextField
+                label="GitHub"
+                name="socialLinks.github"
+                value={about.socialLinks?.github || ''}
+                onChange={handleChange}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+                placeholder="https://github.com/seu-usuario"
+              />
+            </Box>            
+            <Box gridColumn={{ xs: 'span 12', md: 'span 6' }}>
+              <TextField
+                label="LinkedIn"
+                name="socialLinks.linkedin"
+                value={about.socialLinks?.linkedin || ''}
+                onChange={handleChange}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+                placeholder="https://linkedin.com/in/seu-perfil"
+              />
+            </Box>            
+            <Box gridColumn={{ xs: 'span 12', md: 'span 6' }}>
+              <TextField
+                label="Twitter"
+                name="socialLinks.twitter"
+                value={about.socialLinks?.twitter || ''}
+                onChange={handleChange}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+                placeholder="https://twitter.com/seu-usuario"
+              />
+            </Box>            
+            <Box gridColumn={{ xs: 'span 12', md: 'span 6' }}>
+              <TextField
+                label="Website"
+                name="socialLinks.website"
+                value={about.socialLinks?.website || ''}
+                onChange={handleChange}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+                placeholder="https://seu-site.com"
+              />
+            </Box>          </Box>
+        </TabPanel>
+
+        {/* Aba de Habilidades */}
+        <TabPanel value={tabValue} index={1}>
+          <Box display="grid" gridTemplateColumns={
+            {
+              xs: '1fr',
+              md: 'repeat(12, 1fr)'
+            }
+          } gap={3}>
+            <Box gridColumn={{ xs: 'span 12', md: 'span 4' }}>
+              <TextField
+                label="Nome da Habilidade"
+                value={newSkill.name}
+                onChange={(e) => setNewSkill({...newSkill, name: e.target.value})}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+              />
+            </Box>            
+            <Box gridColumn={{ xs: 'span 12', md: 'span 4' }}>
+              <TextField
+                label="Categoria"
+                value={newSkill.category}
+                onChange={(e) => setNewSkill({...newSkill, category: e.target.value})}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+                placeholder="Frontend, Backend, DevOps..."
+              />
+            </Box>            
+            <Box gridColumn={{ xs: 'span 12', md: 'span 3' }}>
+              <TextField
+                label="Nível (0-100)"
+                type="number"
+                value={newSkill.level}
+                onChange={(e) => setNewSkill({...newSkill, level: Number(e.target.value)})}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+                inputProps={{ min: 0, max: 100 }}
+              />
+            </Box>            
+            <Box gridColumn={{ xs: 'span 12', md: 'span 1' }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={addSkill}
+                sx={{ mt: 2 }}
+              >
+                <AddIcon />
+              </Button>
+            </Box>          </Box>
+          
+          <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
+            Habilidades Adicionadas
+          </Typography>
+          
+          {about.skills.length === 0 ? (
+            <Alert severity="info">Nenhuma habilidade adicionada</Alert>
+          ) : (
+            <List>
+              {about.skills.map((skill, index) => (
+                <ListItem
+                  key={index}
+                  secondaryAction={
+                    <IconButton edge="end" aria-label="delete" onClick={() => removeSkill(index)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  }
+                >
+                  <ListItemText
+                    primary={skill.name}
+                    secondary={
+                      <Box>
+                        <Typography variant="body2">{skill.category || 'Sem categoria'} - {skill.level}%</Typography>
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={skill.level} 
+                          sx={{ mt: 1, height: 6, borderRadius: 3 }} 
+                        />
+                      </Box>
+                    }
+                  />
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </TabPanel>
+
+        {/* Aba de Educação */}
+        <TabPanel value={tabValue} index={2}>
+          <Box display="grid" gridTemplateColumns={
+            {
+              xs: '1fr',
+              md: 'repeat(12, 1fr)'
+            }
+          } gap={3}>
+            <Box gridColumn={{ xs: 'span 12', md: 'span 6' }}>
+              <TextField
+                label="Instituição"
+                value={newEducation.institution}
+                onChange={(e) => setNewEducation({...newEducation, institution: e.target.value})}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+                required
+              />
+            </Box>            
+            <Box gridColumn={{ xs: 'span 12', md: 'span 6' }}>
+              <TextField
+                label="Grau/Titulação"
+                value={newEducation.degree}
+                onChange={(e) => setNewEducation({...newEducation, degree: e.target.value})}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+                required
+              />
+            </Box>            
+            <Box gridColumn="span 12">
+              <TextField
+                label="Área de Estudo"
+                value={newEducation.field}
+                onChange={(e) => setNewEducation({...newEducation, field: e.target.value})}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+              />
+            </Box>            
+            <Box gridColumn={{ xs: 'span 12', md: 'span 6' }}>
+              <TextField
+                label="Data de Início"
+                value={newEducation.startDate}
+                onChange={(e) => setNewEducation({...newEducation, startDate: e.target.value})}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+                placeholder="AAAA-MM-DD ou formato livre"
+              />
+            </Box>            
+            <Box gridColumn={{ xs: 'span 12', md: 'span 6' }}>
+              <TextField
+                label="Data de Conclusão"
+                value={newEducation.endDate}
+                onChange={(e) => setNewEducation({...newEducation, endDate: e.target.value})}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+                placeholder="AAAA-MM-DD ou formato livre (deixe em branco se atual)"
+              />
+            </Box>            
+            <Box gridColumn="span 12">
+              <TextField
+                label="Descrição"
+                value={newEducation.description}
+                onChange={(e) => setNewEducation({...newEducation, description: e.target.value})}
+                fullWidth
+                multiline
+                rows={3}
+                margin="normal"
+                variant="outlined"
+              />
+            </Box>            
+            <Box gridColumn="span 12" sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={addEducation}
+                startIcon={<AddIcon />}
+                sx={{ mt: 2 }}
+              >
+                Adicionar Educação
+              </Button>
+            </Box>          </Box>
+          
+          <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
+            Educação Adicionada
+          </Typography>
+          
+          {about.education.length === 0 ? (
+            <Alert severity="info">Nenhuma educação adicionada</Alert>
+          ) : (
+            <List>
+              {about.education.map((edu, index) => (
+                <Paper key={index} elevation={1} sx={{ mb: 2, p: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Box>
+                      <Typography variant="h6">{edu.institution}</Typography>
+                      <Typography variant="subtitle1">{edu.degree} em {edu.field}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {edu.startDate} - {edu.endDate || 'Atual'}
+                      </Typography>
+                      {edu.description && (
+                        <Typography variant="body2" sx={{ mt: 1 }}>
+                          {edu.description}
+                        </Typography>
+                      )}
+                    </Box>
+                    <IconButton color="error" onClick={() => removeEducation(index)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </Box>
+                </Paper>
+              ))}
+            </List>
+          )}
+        </TabPanel>
+
+        {/* Aba de Experiência */}
+        <TabPanel value={tabValue} index={3}>
+          <Box display="grid" gridTemplateColumns={
+            {
+              xs: '1fr',
+              md: 'repeat(12, 1fr)'
+            }
+          } gap={3}>
+            <Box gridColumn={{ xs: 'span 12', md: 'span 6' }}>
+              <TextField
+                label="Empresa"
+                value={newExperience.company}
+                onChange={(e) => setNewExperience({...newExperience, company: e.target.value})}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+                required
+              />
+            </Box>            
+            <Box gridColumn={{ xs: 'span 12', md: 'span 6' }}>
+              <TextField
+                label="Cargo/Posição"
+                value={newExperience.position}
+                onChange={(e) => setNewExperience({...newExperience, position: e.target.value})}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+                required
+              />
+            </Box>            
+            <Box gridColumn={{ xs: 'span 12', md: 'span 6' }}>
+              <TextField
+                label="Data de Início"
+                value={newExperience.startDate}
+                onChange={(e) => setNewExperience({...newExperience, startDate: e.target.value})}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+                placeholder="AAAA-MM-DD ou formato livre"
+              />
+            </Box>            
+            <Box gridColumn={{ xs: 'span 12', md: 'span 6' }}>
+              <TextField
+                label="Data de Término"
+                value={newExperience.endDate}
+                onChange={(e) => setNewExperience({...newExperience, endDate: e.target.value})}
+                fullWidth
+                margin="normal"
+                variant="outlined"
+                placeholder="AAAA-MM-DD ou em branco se atual"
+                disabled={newExperience.current}
+              />
+            </Box>            
+            <Box gridColumn="span 12">
+              <TextField
+                label="Descrição"
+                value={newExperience.description}
+                onChange={(e) => setNewExperience({...newExperience, description: e.target.value})}
+                fullWidth
+                multiline
+                rows={3}
+                margin="normal"
+                variant="outlined"
+              />
+            </Box>            
+            <Box gridColumn="span 12">
+              <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
+                Tecnologias Utilizadas
+              </Typography>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <TextField
+                  label="Tecnologia"
+                  value={newTechnology}
+                  onChange={(e) => setNewTechnology(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                  sx={{ mr: 1 }}
+                />
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={addTechnology}
+                  size="small"
+                >
+                  Adicionar
+                </Button>
+              </Box>
+              
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
+                {newExperience.technologies.map((tech, index) => (
+                  <Chip
+                    key={index}
+                    label={tech}
+                    onDelete={() => removeTechnology(index)}
+                    color="primary"
+                    variant="outlined"
+                    size="small"
+                    sx={{ m: 0.5 }}
+                  />
+                ))}
+              </Stack>
+            </Box>            
+            <Box gridColumn="span 12" sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={addExperience}
+                startIcon={<AddIcon />}
+                sx={{ mt: 2 }}
+              >
+                Adicionar Experiência
+              </Button>
+            </Box>          </Box>
+          
+          <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
+            Experiências Adicionadas
+          </Typography>
+          
+          {about.experience.length === 0 ? (
+            <Alert severity="info">Nenhuma experiência adicionada</Alert>
+          ) : (
+            <List>
+              {about.experience.map((exp, index) => (
+                <Paper key={index} elevation={1} sx={{ mb: 2, p: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Box>
+                      <Typography variant="h6">{exp.company}</Typography>
+                      <Typography variant="subtitle1">{exp.position}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {exp.startDate} - {exp.current ? 'Atual' : exp.endDate}
+                      </Typography>
+                      {exp.description && (
+                        <Typography variant="body2" sx={{ mt: 1 }}>
+                          {exp.description}
+                        </Typography>
+                      )}
+                      
+                      {exp.technologies && exp.technologies.length > 0 && (
+                        <Box sx={{ mt: 1 }}>
+                          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                            {exp.technologies.map((tech, i) => (
+                              <Chip
+                                key={i}
+                                label={tech}
+                                color="primary"
+                                variant="outlined"
+                                size="small"
+                                sx={{ m: 0.5 }}
+                              />
+                            ))}
+                          </Stack>
+                        </Box>
+                      )}
+                    </Box>
+                    <IconButton color="error" onClick={() => removeExperience(index)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </Box>
+                </Paper>
+              ))}
+            </List>
+          )}
+        </TabPanel>
+
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<SaveIcon />}
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? 'Salvando...' : 'Salvar Perfil'}
+          </Button>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+}

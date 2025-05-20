@@ -1,0 +1,57 @@
+# Dependências
+node_modules
+.pnp
+.pnp.js
+
+# Arquivos de ambiente
+.env
+.env.*
+!.env.example
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Diretórios de build
+.next/
+out/
+build/
+dist/
+
+# Cache
+.vercel
+.turbo
+.cache
+
+# Arquivos do sistema
+.DS_Store
+*.pem
+ThumbsDb
+
+# Testes
+/coverage
+
+# Debug
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Especificidades do Next.js
+**/.next/**
+**/.next
+**/out
+
+# Especificidades do NestJS
+**/dist
+**/dist/**
