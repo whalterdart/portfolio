@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Box, Typography, Card, CardContent, Avatar, Chip, Divider, LinearProgress, Stack, Paper, List, ListItem, ListItemIcon, ListItemText, IconButton, useTheme, useMediaQuery, alpha } from '@mui/material';
+import { Box, Typography, Card, CardContent, Avatar, Chip, Divider, LinearProgress, Stack, Paper, List, ListItem, ListItemIcon, ListItemText, IconButton, useTheme, useMediaQuery, alpha, CircularProgress } from '@mui/material';
 // O Material UI v7 renomeou o Grid e mudou sua API
 import { Grid } from '@mui/material';
 import { School, Work, Code, DateRange, GitHub, LinkedIn, Twitter, Language, Instagram } from '@mui/icons-material';
@@ -10,9 +10,10 @@ import type { About } from '../../../../../lib/types/about.types';
 
 interface AboutMeSectionProps {
   preloadedData?: About | null;
+  onLoadingComplete?: () => void;
 }
 
-export default function AboutMeSection({ preloadedData }: AboutMeSectionProps) {
+export default function AboutMeSection({ preloadedData, onLoadingComplete }: AboutMeSectionProps) {
   const [about, setAbout] = useState<About | null>(preloadedData || null);
   const [loading, setLoading] = useState(!preloadedData);
   const [error, setError] = useState('');
@@ -25,6 +26,7 @@ export default function AboutMeSection({ preloadedData }: AboutMeSectionProps) {
     if (preloadedData) {
       setAbout(preloadedData);
       setLoading(false);
+      if (onLoadingComplete) onLoadingComplete();
       return;
     }
     
@@ -51,16 +53,17 @@ export default function AboutMeSection({ preloadedData }: AboutMeSectionProps) {
         setError('Falha ao carregar informações');
       } finally {
         setLoading(false);
+        if (onLoadingComplete) onLoadingComplete();
       }
     };
 
     fetchAboutInfo();
-  }, [preloadedData]);
+  }, [preloadedData, onLoadingComplete]);
 
   if (loading) {
     return (
-      <Box sx={{ py: 4, textAlign: 'center' }}>
-        <Typography>Carregando informações...</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+        <CircularProgress />
       </Box>
     );
   }

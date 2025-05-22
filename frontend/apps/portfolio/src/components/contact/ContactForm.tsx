@@ -17,6 +17,7 @@ interface FormData {
   name: string;
   email: string;
   message: string;
+  subject: string;
 }
 
 interface ContactFormProps {
@@ -27,7 +28,8 @@ const ContactForm = ({ showTitle = true }: ContactFormProps) => {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
-    message: ''
+    message: '',
+    subject: 'Contato do Site' // Default subject that will always be set
   });
   const [errors, setErrors] = useState<Partial<FormData>>({});
   const [loading, setLoading] = useState(false);
@@ -72,6 +74,11 @@ const ContactForm = ({ showTitle = true }: ContactFormProps) => {
       isValid = false;
     }
 
+    if (!formData.subject.trim()) {
+      newErrors.subject = 'Assunto é obrigatório';
+      isValid = false;
+    }
+
     setErrors(newErrors);
     return isValid;
   };
@@ -94,7 +101,7 @@ const ContactForm = ({ showTitle = true }: ContactFormProps) => {
       const contactData: ContactFormData = {
         name: formData.name,
         email: formData.email,
-        subject: 'Contato do Site', // Default subject
+        subject: formData.subject,
         message: formData.message
       };
       
@@ -116,7 +123,8 @@ const ContactForm = ({ showTitle = true }: ContactFormProps) => {
       setFormData({
         name: '',
         email: '',
-        message: ''
+        message: '',
+        subject: 'Contato do Site'
       });
       setSubmitted(true);
     } catch (error) {

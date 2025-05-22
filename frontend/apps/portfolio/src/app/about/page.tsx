@@ -1,12 +1,19 @@
 'use client';
 
-import { useEffect } from 'react';
-import { Box, Container, Typography, Paper, alpha } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Box, Container, Typography, Paper, alpha, CircularProgress } from '@mui/material';
 import { Navigation } from '../../components/layout/Navigation';
 import { Footer } from '../../components/layout/Footer';
 import AboutMeSection from '../../components/about/AboutMeSection';
 
 export default function AboutPage() {
+  const [loading, setLoading] = useState(true);
+
+  // Handle loading state from child component
+  const handleLoadingComplete = () => {
+    setLoading(false);
+  };
+
   // Add parallax background elements
   useEffect(() => {
     // Add client-side effect to match the home page visual style
@@ -112,7 +119,8 @@ export default function AboutPage() {
             p: { xs: 2, sm: 4, md: 6 },
             position: 'relative',
             zIndex: 1,
-            backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,1), rgba(245,247,250,1))'
+            backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,1), rgba(245,247,250,1))',
+            minHeight: 400 // Ensure minimum height for loading state
           }}
         >
           {/* Decorative elements */}
@@ -158,7 +166,19 @@ export default function AboutPage() {
           
           {/* Content */}
           <Box sx={{ position: 'relative', zIndex: 1 }}>
-            <AboutMeSection />
+            {loading && (
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                minHeight: '300px' 
+              }}>
+                <CircularProgress />
+              </Box>
+            )}
+            <Box sx={{ opacity: loading ? 0 : 1, transition: 'opacity 0.5s ease' }}>
+              <AboutMeSection onLoadingComplete={handleLoadingComplete} />
+            </Box>
           </Box>
         </Paper>
       </Container>
