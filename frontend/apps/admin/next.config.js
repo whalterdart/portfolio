@@ -14,6 +14,7 @@ const nextConfig = {
   },
   // Configuração do proxy reverso para a API
   async rewrites() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
     return [
       // Prioritize the local API routes for admin-specific endpoints
       {
@@ -36,7 +37,7 @@ const nextConfig = {
       // Forward all other API requests to the NestJS backend
       {
         source: '/api/:path*',
-        destination: 'http://localhost:3001/api/:path*',
+        destination: `${apiUrl}/:path*`,
       },
     ];
   },

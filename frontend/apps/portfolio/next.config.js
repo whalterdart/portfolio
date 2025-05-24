@@ -7,10 +7,11 @@ const nextConfig = {
   },
   // Configuração do proxy reverso para a API
   async rewrites() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:3001/api/:path*', // A API do NestJS está rodando na porta 3001
+        destination: `${apiUrl}/:path*`, // Use environment variable
       },
     ];
   },

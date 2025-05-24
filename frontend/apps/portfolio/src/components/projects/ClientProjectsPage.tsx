@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Project } from '../../../../../lib/types/project.types';
 import { Box, Container, Typography, Divider, Paper } from '@mui/material';
 import { ProjectCard } from './ProjectCard';
@@ -13,6 +13,11 @@ interface ClientProjectsPageProps {
 }
 
 export default function ClientProjectsPage({ projects }: ClientProjectsPageProps) {
+  // Log all projects for debugging
+  useEffect(() => {
+    console.log('Client Projects Page - All Projects:', projects);
+  }, [projects]);
+
   const processedProjects = projects.map(project => ({
     ...project,
     createdAt: project.createdAt instanceof Date ? project.createdAt : new Date(project.createdAt),

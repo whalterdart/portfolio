@@ -6,9 +6,10 @@ import { Box, Container, Typography, CircularProgress } from '@mui/material';
 import { Navigation } from '../../components/layout/Navigation';
 import { Footer } from '../../components/layout/Footer';
 import ClientProjectsPage from '../../components/projects/ClientProjectsPage';
+import { Project } from '../../../../../lib/types/project.types';
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<any[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

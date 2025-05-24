@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Box, Container, Typography, Link, Stack, Divider, IconButton, useTheme } from '@mui/material';
-import { GitHub, LinkedIn, Twitter, Email, ArrowUpward } from '@mui/icons-material';
+import { GitHub, LinkedIn, Instagram, Email, ArrowUpward } from '@mui/icons-material';
 
 export const Footer = () => {
   const theme = useTheme();
@@ -114,16 +114,6 @@ export const Footer = () => {
               >
                 <LinkedIn fontSize="small" />
               </IconButton>
-              {/* <IconButton 
-                size="small" 
-                aria-label="Twitter"
-                sx={{ 
-                  color: theme.palette.text.secondary,
-                  '&:hover': { color: theme.palette.primary.main }
-                }}
-              >
-                <Twitter fontSize="small" />
-              </IconButton> */}
               <IconButton 
                 size="small" 
                 aria-label="Email"

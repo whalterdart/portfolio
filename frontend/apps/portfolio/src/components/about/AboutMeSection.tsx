@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Box, Typography, Card, CardContent, Avatar, Chip, Divider, LinearProgress, Stack, Paper, List, ListItem, ListItemIcon, ListItemText, IconButton, useTheme, useMediaQuery, alpha, CircularProgress } from '@mui/material';
+import { Box, Typography, Card, CardContent, Avatar, Chip, LinearProgress, IconButton, useTheme, useMediaQuery, alpha, CircularProgress } from '@mui/material';
 // O Material UI v7 renomeou o Grid e mudou sua API
 import { Grid } from '@mui/material';
 import { School, Work, Code, DateRange, GitHub, LinkedIn, Twitter, Language, Instagram } from '@mui/icons-material';
@@ -19,7 +19,6 @@ export default function AboutMeSection({ preloadedData, onLoadingComplete }: Abo
   const [error, setError] = useState('');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
 
   useEffect(() => {
     // Se já tivermos dados pré-carregados, não precisamos buscar novamente
@@ -48,7 +47,7 @@ export default function AboutMeSection({ preloadedData, onLoadingComplete }: Abo
           console.warn('Nenhum about ativo encontrado');
           setError('Nenhuma informação disponível no momento.');
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Erro ao buscar informações de about:', error);
         setError('Falha ao carregar informações');
       } finally {

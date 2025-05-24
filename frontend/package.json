@@ -9,7 +9,8 @@
     "dev": "concurrently -n \"PORTFOLIO,ADMIN\" -c \"blue,green\" -p \"[{name}]\" \"npm run dev -w portfolio -- -p 3003\" \"npm run dev -w admin -- -p 3002\"",
     "build:admin": "npm run build -w admin",
     "build:portfolio": "npm run build -w portfolio",
-    "build": "npm-run-all --parallel build:*"
+    "build": "npm-run-all --parallel build:*",
+    "start": "concurrently -n \"PORTFOLIO,ADMIN\" -c \"blue,green\" -p \"[{name}]\" \"npm run start -w portfolio\" \"npm run start -w admin\""
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

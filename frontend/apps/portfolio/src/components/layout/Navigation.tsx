@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -33,7 +33,7 @@ import {
   GitHub,
   LinkedIn,
   Twitter,
-  Close,
+  Close as CloseIcon,
   ChevronRight
 } from '@mui/icons-material';
 
@@ -146,7 +146,7 @@ export function Navigation() {
           Whalter Duarte
         </Typography>
         <IconButton>
-          <Close />
+          <CloseIcon />
         </IconButton>
       </Box>
       <Divider sx={{ mb: 3 }} />

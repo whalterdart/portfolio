@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Box, Container, Typography, Paper, alpha, CircularProgress } from '@mui/material';
+import { Box, Container, Typography, Paper, CircularProgress } from '@mui/material';
 import { Navigation } from '../../components/layout/Navigation';
 import { Footer } from '../../components/layout/Footer';
 import AboutMeSection from '../../components/about/AboutMeSection';

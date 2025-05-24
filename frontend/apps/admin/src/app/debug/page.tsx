@@ -13,6 +13,10 @@ export default function DebugPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Find and replace all hardcoded URLs
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  const BASE_URL = API_URL.replace('/api', '');
+
   const handleTest = async () => {
     setLoading(true);
     setError(null);
@@ -135,22 +139,22 @@ export default function DebugPage() {
               Common API Endpoints
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              <Button variant="outlined" size="small" onClick={() => setEndpoint('/api/about')}>
+              <Button variant="outlined" size="small" onClick={() => setEndpoint(`${API_URL}/about`)}>
                 GET /api/about
               </Button>
               <Button variant="outlined" size="small" onClick={() => {
-                setEndpoint('/api/about');
+                setEndpoint(`${API_URL}/about`);
                 setMethod('POST');
               }}>
                 POST /api/about
               </Button>
-              <Button variant="outlined" size="small" onClick={() => setEndpoint('/api/about/current')}>
+              <Button variant="outlined" size="small" onClick={() => setEndpoint(`${API_URL}/about/current`)}>
                 GET /api/about/current
               </Button>
-              <Button variant="outlined" size="small" onClick={() => setEndpoint('/api/projects')}>
+              <Button variant="outlined" size="small" onClick={() => setEndpoint(`${API_URL}/projects`)}>
                 GET /api/projects
               </Button>
-              <Button variant="outlined" size="small" onClick={() => setEndpoint('http://localhost:3001/api/about')}>
+              <Button variant="outlined" size="small" onClick={() => setEndpoint(`${API_URL}/about`)}>
                 NestJS: GET /api/about
               </Button>
             </Box>
@@ -166,7 +170,7 @@ export default function DebugPage() {
                 onClick={async () => {
                   setLoading(true);
                   try {
-                    const response = await axios.get('/api/debug?url=http://localhost:3001/api/about');
+                    const response = await axios.get(`/api/debug?url=${API_URL}/about`);
                     setResponse(response.data);
                   } catch (err: any) {
                     setError(`Error: ${err.message}`);
@@ -183,8 +187,8 @@ export default function DebugPage() {
                 onClick={async () => {
                   setLoading(true);
                   try {
-                    const response = await axios.post('/api/debug', {
-                      url: 'http://localhost:3001/api/about',
+                    const response = await axios.post(`${API_URL}/debug`, {
+                      url: `${API_URL}/about`,
                       method: 'POST',
                       data: {
                         title: "Debug Test POST via Backend",
@@ -212,7 +216,7 @@ export default function DebugPage() {
                   setLoading(true);
                   try {
                     // This tests if the local API route is working
-                    const response = await axios.post('/api/about', {
+                    const response = await axios.post(`${API_URL}/about`, {
                       title: "Debug Test via Local API",
                       description: "Testing API routing through Next.js",
                       skills: [],
@@ -246,18 +250,30 @@ export default function DebugPage() {
                     const { AboutService } = await import('@lib/services/about.service');
                     const aboutService = new AboutService();
                     
-                    // Create a simple about entry
-                    const result = await aboutService.createAboutDirect({
+                    // Create a simple about entry using the regular create method
+                    const aboutData = {
                       title: "Test About via Direct API Call",
                       description: "This was created using a direct API call to the backend",
                       skills: [{name: "API Testing", level: 100, category: "Backend"}],
                       education: [],
                       experience: []
-                    });
+                    };
                     
-                    setResponse({
-                      message: "About created successfully with direct call",
-                      result
+                    // Use the regular create method that returns an Observable
+                    await new Promise<any>((resolve, reject) => {
+                      aboutService.create(aboutData).subscribe({
+                        next: (result) => {
+                          setResponse({
+                            message: "About created successfully with direct call",
+                            result
+                          });
+                          resolve(result);
+                        },
+                        error: (err) => {
+                          setError(`Direct API Error: ${err.message}\n${err.response?.data ? JSON.stringify(err.response.data, null, 2) : ''}`);
+                          reject(err);
+                        }
+                      });
                     });
                   } catch (err: any) {
                     setError(`Direct API Error: ${err.message}\n${err.response?.data ? JSON.stringify(err.response.data, null, 2) : ''}`);
@@ -285,7 +301,7 @@ export default function DebugPage() {
                 onClick={async () => {
                   setLoading(true);
                   try {
-                    const response = await axios.get('http://localhost:3001');
+                    const response = await axios.get(BASE_URL);
                     setResponse({
                       message: "Successfully connected to backend base URL",
                       status: response.status,
@@ -298,7 +314,7 @@ export default function DebugPage() {
                   }
                 }}
               >
-                Test Backend Base URL (localhost:3001)
+                Test Backend Base URL ({BASE_URL})
               </Button>
               
               <Button 
@@ -306,7 +322,7 @@ export default function DebugPage() {
                 onClick={async () => {
                   setLoading(true);
                   try {
-                    const response = await axios.get('http://localhost:3001/api');
+                    const response = await axios.get(API_URL);
                     setResponse({
                       message: "Successfully connected to backend API root",
                       status: response.status,
@@ -319,7 +335,7 @@ export default function DebugPage() {
                   }
                 }}
               >
-                Test Backend API Root (localhost:3001/api)
+                Test Backend API Root ({API_URL})
               </Button>
               
               <Button 
@@ -327,7 +343,7 @@ export default function DebugPage() {
                 onClick={async () => {
                   setLoading(true);
                   try {
-                    const response = await axios.get('http://localhost:3001/api/about');
+                    const response = await axios.get(`${API_URL}/about`);
                     setResponse({
                       message: "Successfully connected to backend About API",
                       status: response.status,
@@ -340,7 +356,7 @@ export default function DebugPage() {
                   }
                 }}
               >
-                Test Backend About API (localhost:3001/api/about)
+                Test Backend About API ({API_URL}/about)
               </Button>
               
               {/* Different ports to try */}
@@ -356,7 +372,7 @@ export default function DebugPage() {
                     onClick={async () => {
                       setLoading(true);
                       try {
-                        const response = await axios.get(`http://localhost:${port}/api/about`);
+                        const response = await axios.get(`${BASE_URL}:${port}/api/about`);
                         setResponse({
                           message: `Successfully connected to port ${port}`,
                           status: response.status,
@@ -391,9 +407,9 @@ export default function DebugPage() {
                   setLoading(true);
                   try {
                     // Use our special debug route to test the API with full control
-                    const response = await axios.patch('/api/debug', {
+                    const response = await axios.patch(`${API_URL}/debug`, {
                       port: 3001,
-                      endpoint: '/api/about',
+                      endpoint: `/api/about`,
                       method: 'POST',
                       data: {
                         title: "Debug Direct Test",

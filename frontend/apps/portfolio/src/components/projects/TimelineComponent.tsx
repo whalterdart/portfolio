@@ -1,18 +1,47 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Project } from '../../../../../lib/types/project.types';
 import { VerticalTimeline, VerticalTimelineElement } from 'react-vertical-timeline-component';
 import 'react-vertical-timeline-component/style.min.css';
 import { Box, Typography, Chip, Button, useTheme, alpha } from '@mui/material';
 import { GitHub as GitHubIcon, Launch as LaunchIcon, Code as CodeIcon } from '@mui/icons-material';
+import Image from 'next/image';
 
 interface TimelineComponentProps {
   projects: Project[];
 }
 
+// Helper function to validate image URLs
+const isValidImageUrl = (url: string): boolean => {
+  if (!url) return false;
+  
+  // Log the image URL for debugging
+  console.log('Project image URL:', url);
+  
+  try {
+    // Check if it's a relative URL starting with "/"
+    if (url.startsWith('/')) return true;
+    
+    // Check if it's an absolute URL (http:// or https://)
+    const urlObj = new URL(url);
+    return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+  } catch (e) {
+    console.error('Invalid image URL:', url, e);
+    return false;
+  }
+};
+
+// Default fallback image
+const DEFAULT_IMAGE = '/project-placeholder.svg';
+
 export default function TimelineComponent({ projects }: TimelineComponentProps) {
   const theme = useTheme();
+
+  // Log projects for debugging
+  useEffect(() => {
+    console.log('Timeline Projects:', projects);
+  }, [projects]);
 
   const sortedProjects = [...projects].sort((a, b) => {
     return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
@@ -42,11 +71,28 @@ export default function TimelineComponent({ projects }: TimelineComponentProps) 
             contentArrowStyle={{ borderRight: `7px solid ${alpha(theme.palette.primary.main, 0.2)}` }}
             icon={<CodeIcon />}
           >
-            <Box sx={{ position: 'relative', mb: 2, overflow: 'hidden', borderRadius: 1 }}>
-              <img
-                src={project.imageUrl}
+            <Box 
+              sx={{ 
+                position: 'relative', 
+                mb: 2, 
+                overflow: 'hidden', 
+                borderRadius: 1,
+                // Add a fixed height to ensure the image container has dimensions
+                height: 200,
+                minHeight: 200,
+                width: '100%'
+              }}
+            >
+              <Image
+                src={isValidImageUrl(project.imageUrl) ? project.imageUrl : DEFAULT_IMAGE}
                 alt={project.title}
-                style={{ width: '100%', height: '200px', objectFit: 'cover' }}
+                fill
+                style={{ objectFit: 'cover' }}
+                sizes="(max-width: 600px) 100vw, 500px"
+                // Add onError handler
+                onError={() => {
+                  console.error('Image failed to load:', project.imageUrl);
+                }}
               />
               <Box
                 sx={{

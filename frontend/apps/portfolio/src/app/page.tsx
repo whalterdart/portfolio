@@ -2,26 +2,25 @@
 
 import Link from 'next/link';
 import { useEffect, useState, useRef } from 'react';
-import { alpha, Avatar, Box, Button, Container, Divider, IconButton, styled, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Avatar, Box, Button, Container, Divider, IconButton, styled, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { ChevronRight, GitHub, LinkedIn, Twitter, Instagram, Language } from '@mui/icons-material';
 import { Navigation } from '../components/layout/Navigation';
 import { Footer } from '../components/layout/Footer';
 import dynamic from 'next/dynamic';
 import { Project } from '../../../../lib/types/project.types';
-import { Profile } from '../../../../lib/types/profile.types';
 import { ProjectCard } from '../components/projects/ProjectCard';
 import { ProjectService } from '../../../../lib/services/project.service';
 import { ProfileService } from '../../../../lib/services/profile.service';
 import ContactSection from '../components/contact/ContactSection';
+import { About } from '../../../../lib/types/about.types';
 
 const TimelineComponent = dynamic(() => import('../components/projects/TimelineComponent'), { ssr: false });
 const AboutMeSection = dynamic(() => import('../components/about/AboutMeSection'), { ssr: false });
-const ContactForm = dynamic(() => import('../components/contact/ContactForm'), { ssr: false });
 
-const Particle = styled(Box)(({ theme }) => ({
+const Particle = styled(Box)(() => ({
   position: 'absolute',
   borderRadius: '50%',
-  background: alpha(theme.palette.primary.main, 0.2),
+  background: 'rgba(255, 255, 255, 0.2)',
   animation: 'floatParticle 15s infinite ease-in-out',
   backdropFilter: 'blur(5px)',
   border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -29,19 +28,7 @@ const Particle = styled(Box)(({ theme }) => ({
   transition: 'transform 0.3s ease-out, opacity 0.5s ease-out'
 }));
 
-const FloatingSquare = styled(Box)(({ theme }) => ({
-  position: 'absolute',
-  borderRadius: '12px',
-  background: alpha(theme.palette.primary.main, 0.15),
-  backdropFilter: 'blur(5px)',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
-  boxShadow: '0 8px 32px rgba(31, 38, 135, 0.15)',
-  animation: 'floatSquare 20s infinite ease-in-out',
-  transform: 'rotate(10deg)',
-  transition: 'transform 0.3s ease-out, opacity 0.5s ease-out'
-}));
-
-const InteractiveParticle = styled(Box)(({ theme }) => ({
+const InteractiveParticle = styled(Box)(() => ({
   position: 'absolute',
   borderRadius: '50%',
   background: 'linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05))',
@@ -55,7 +42,7 @@ const InteractiveParticle = styled(Box)(({ theme }) => ({
   }
 }));
 
-const InteractiveSquare = styled(Box)(({ theme }) => ({
+const InteractiveSquare = styled(Box)(() => ({
   position: 'absolute',
   background: 'linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05))',
   backdropFilter: 'blur(5px)',
@@ -68,7 +55,7 @@ const InteractiveSquare = styled(Box)(({ theme }) => ({
   }
 }));
 
-const GlowingOrb = styled(Box)(({ theme }) => ({
+const GlowingOrb = styled(Box)(() => ({
   position: 'absolute',
   borderRadius: '50%',
   background: 'radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0))',
@@ -78,7 +65,7 @@ const GlowingOrb = styled(Box)(({ theme }) => ({
   transition: 'transform 0.3s ease-out'
 }));
 
-const PrimaryButton = styled(Button)(({ theme }) => ({
+const PrimaryButton = styled(Button)(() => ({
   borderRadius: '30px',
   padding: '10px 25px',
   backgroundColor: '#38bdf8',
@@ -93,7 +80,7 @@ const PrimaryButton = styled(Button)(({ theme }) => ({
   }
 }));
 
-const SecondaryButton = styled(Button)(({ theme }) => ({
+const SecondaryButton = styled(Button)(() => ({
   borderRadius: '30px',
   padding: '10px 25px',
   border: '2px solid #a5f3fc',
@@ -110,36 +97,34 @@ const SecondaryButton = styled(Button)(({ theme }) => ({
   }
 }));
 
-const menuLinks = [
-  { title: 'Início', path: '/' },
-  { title: 'Projetos', path: '/projects' },
-  { title: 'Sobre', path: '/about' },
-  { title: 'Contato', path: '/contact' }
-];
-
 export default function HomePage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
   // Estados para armazenar dados
   const [projects, setProjects] = useState<Project[]>([]);
-  const [profile, setProfile] = useState<any>({
+  const [profile, setProfile] = useState<{
+    name: string;
+    highlightedText: string;
+    description: string;
+    socialLinks: Array<{platform: string; url: string}>;
+  }>({
     name: '',
     highlightedText: '',
     description: '',
     socialLinks: []
   });
-  const [aboutData, setAboutData] = useState<any>(null);
+  const [aboutData, setAboutData] = useState<About | null>(null);
   
   // Estado de carregamento global
   const [isLoading, setIsLoading] = useState(true);
   
-  // Mouse tracking for parallax effects - with throttling
-  const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });
+  // Mouse tracking optimization - use refs instead of state
+  const mousePosition = useRef({ x: 0.5, y: 0.5 });
   const heroRef = useRef<HTMLDivElement>(null);
-  const requestRef = useRef<number | null>(null);
-  const previousTimeRef = useRef<number>(0);
-  const mousePosRef = useRef({ x: 0.5, y: 0.5 });
+  const isMouseMoving = useRef(false);
+  const lastMoveTime = useRef(0);
+  const rafId = useRef<number | null>(null);
   
   // Use um ID único de cliente para evitar problemas de hydration
   const clientId = useRef(`client-${Date.now()}`).current;
@@ -170,7 +155,7 @@ export default function HomePage() {
     { x: 60, y: 10, size: 50, factor: 0.07, color: 'rgba(255,255,255,0.6)', duration: 17, delay: 3 }
   ]);
   
-  // Optimized mouse movement handler with throttling via requestAnimationFrame
+  // Optimized mouse movement handler with better throttling
   const updateMousePosition = (clientX: number, clientY: number) => {
     if (heroRef.current) {
       const rect = heroRef.current.getBoundingClientRect();
@@ -180,46 +165,45 @@ export default function HomePage() {
         clientY >= rect.top && 
         clientY <= rect.bottom
       ) {
-        // Store values in ref to avoid unnecessary state updates
-        mousePosRef.current = {
-          x: (clientX - rect.left) / rect.width,
-          y: (clientY - rect.top) / rect.height
-        };
+        const x = (clientX - rect.left) / rect.width;
+        const y = (clientY - rect.top) / rect.height;
+        
+        // Store values in ref to avoid state updates
+        mousePosition.current = { x, y };
+        
+        // Set CSS variables directly on hero element for better performance
+        if (heroRef.current) {
+          heroRef.current.style.setProperty('--mouse-x', x.toString());
+          heroRef.current.style.setProperty('--mouse-y', y.toString());
+        }
+        
+        isMouseMoving.current = true;
+        lastMoveTime.current = Date.now();
+        
+        // Only schedule animation frame if not already scheduled
+        if (rafId.current === null) {
+          rafId.current = requestAnimationFrame(updateElements);
+        }
       }
     }
   };
   
-  // Animation loop function to throttle state updates
-  const animationLoop = (time: number) => {
-    if (previousTimeRef.current === 0) {
-      previousTimeRef.current = time;
+  // Optimized function to update elements based on mouse position
+  const updateElements = () => {
+    rafId.current = null;
+    
+    // If it's been more than 100ms since last mouse movement, consider it stopped
+    if (Date.now() - lastMoveTime.current > 100) {
+      isMouseMoving.current = false;
     }
     
-    const deltaTime = time - previousTimeRef.current;
-    
-    // Only update state every 16ms (roughly 60fps) to prevent excessive renders
-    if (deltaTime > 16) {
-      // Only update state if the mouse position has changed
-      if (mousePosition.x !== mousePosRef.current.x || mousePosition.y !== mousePosRef.current.y) {
-        setMousePosition(mousePosRef.current);
-      }
-      previousTimeRef.current = time;
+    // If still moving, request another frame
+    if (isMouseMoving.current) {
+      rafId.current = requestAnimationFrame(updateElements);
     }
-    
-    requestRef.current = requestAnimationFrame(animationLoop);
   };
   
-  // Setup animation loop
-  useEffect(() => {
-    requestRef.current = requestAnimationFrame(animationLoop);
-    return () => {
-      if (requestRef.current !== null) {
-        cancelAnimationFrame(requestRef.current);
-      }
-    };
-  }, []);
-  
-  // Set up global mouse move handler with debouncing
+  // Set up global mouse move handler with passive event
   useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
       updateMousePosition(e.clientX, e.clientY);
@@ -230,33 +214,33 @@ export default function HomePage() {
     
     return () => {
       document.removeEventListener('mousemove', handleGlobalMouseMove);
+      if (rafId.current !== null) {
+        cancelAnimationFrame(rafId.current);
+      }
     };
   }, []);
   
-  // Mouse movement handler for direct element events
+  // Direct mouse event handler for hero section
   const handleMouseMove = (e: React.MouseEvent) => {
     updateMousePosition(e.clientX, e.clientY);
   };
   
-  // Optimized offset calculation using memoization
-  const calcOffset = (factor = 1) => {
-    if (!heroRef.current) return { x: 0, y: 0 };
-    
-    // Precalculate center point relative values to avoid recalculations
-    const centerX = 0.5;
-    const centerY = 0.5;
-    
-    // Use a smaller multiplier for smoother movements
-    const multiplier = 15;
-    
-    const offsetX = (mousePosition.x - centerX) * multiplier * factor;
-    const offsetY = (mousePosition.y - centerY) * multiplier * factor;
-    
-    return { x: offsetX, y: offsetY };
+  // Optimized offset calculation using CSS variables
+  const getCalcOffset = (factor = 1) => {
+    return {
+      x: `calc((var(--mouse-x, 0.5) - 0.5) * ${15 * factor}px)`,
+      y: `calc((var(--mouse-y, 0.5) - 0.5) * ${15 * factor}px)`
+    };
   };
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    // Initialize CSS variables
+    if (heroRef.current) {
+      heroRef.current.style.setProperty('--mouse-x', '0.5');
+      heroRef.current.style.setProperty('--mouse-y', '0.5');
+    }
 
     // Função para carregar todos os dados necessários
     const loadAllData = async () => {
@@ -324,17 +308,20 @@ export default function HomePage() {
               console.log('Nenhum projeto retornado pela API');
               fetchedProjects = [];
             } else {
-              fetchedProjects = projects.map((project: any) => ({
-                id: project._id || project.id,
-                title: project.title,
-                description: project.description,
-                imageUrl: project.imageUrl,
-                technologies: project.technologies || [],
-                createdAt: project.createdAt instanceof Date ? project.createdAt : new Date(project.createdAt),
-                updatedAt: project.updatedAt instanceof Date ? project.updatedAt : new Date(project.updatedAt),
-                githubUrl: project.githubUrl || '',
-                liveUrl: project.liveUrl || ''
-              }));
+              fetchedProjects = projects.map((project: any) => {
+                // Validation to ensure data is properly formatted
+                return {
+                  id: project._id || project.id || `temp-${Date.now()}`,
+                  title: project.title || 'Projeto sem título',
+                  description: project.description || 'Sem descrição disponível',
+                  imageUrl: project.imageUrl || '',
+                  technologies: Array.isArray(project.technologies) ? project.technologies : [],
+                  createdAt: project.createdAt ? new Date(project.createdAt) : new Date(),
+                  updatedAt: project.updatedAt ? new Date(project.updatedAt) : new Date(),
+                  githubUrl: project.githubUrl || '',
+                  liveUrl: project.liveUrl || ''
+                };
+              });
             }
           } catch (error) {
             console.error('Erro ao buscar projetos:', error);
@@ -404,12 +391,6 @@ export default function HomePage() {
     };
 
     loadAllData();
-    
-    // Initialize mouse position to center
-    if (heroRef.current) {
-      const rect = heroRef.current.getBoundingClientRect();
-      setMousePosition({ x: 0.5, y: 0.5 });
-    }
   }, []);
 
   // Componente de loading global
@@ -557,39 +538,55 @@ export default function HomePage() {
           position: 'relative',
           overflow: 'hidden',
           background: 'linear-gradient(135deg, #5b21b6 0%, #1e40af 100%)',
-          willChange: 'transform' // Hint to browser to optimize transformations
+          willChange: 'transform', // Hint to browser to optimize transformations
+          '& .parallax-element': {
+            transition: 'transform 0.2s ease-out'
+          }
         }}
       >
-        {/* Animated gradient orb backgrounds */}
+        {/* Animated gradient orb backgrounds - using CSS variables instead of style props for better performance */}
         <GlowingOrb 
+          className="parallax-element"
           sx={{ 
             width: '600px', 
             height: '600px',
             left: '10%', 
             top: '10%',
             background: 'radial-gradient(circle at 30% 30%, rgba(167, 139, 250, 0.5), rgba(139, 92, 246, 0))',
-            transform: `translate3d(${calcOffset(12).x}px, ${calcOffset(12).y}px, 0)`,
-            willChange: 'transform'
+            transform: `translate3d(
+              calc((var(--mouse-x, 0.5) - 0.5) * ${12 * 15}px),
+              calc((var(--mouse-y, 0.5) - 0.5) * ${12 * 15}px),
+              0
+            )`,
+            willChange: 'transform',
+            transition: 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)'
           }} 
         />
         
         <GlowingOrb 
+          className="parallax-element"
           sx={{ 
             width: '500px', 
             height: '500px',
             right: '0%', 
             bottom: '0%',
             background: 'radial-gradient(circle at 30% 30%, rgba(96, 165, 250, 0.5), rgba(59, 130, 246, 0))',
-            transform: `translate3d(${calcOffset(-10).x}px, ${calcOffset(-10).y}px, 0)`,
+            transform: `translate3d(
+              calc((var(--mouse-x, 0.5) - 0.5) * ${-10 * 15}px),
+              calc((var(--mouse-y, 0.5) - 0.5) * ${-10 * 15}px),
+              0
+            )`,
             willChange: 'transform',
+            transition: 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
             animationDelay: '2s'
           }} 
         />
         
-        {/* Interactive Particles (Circles) - optimized transforms */}
-        {interactiveElementsRef.current.slice(0, 6).map((el, index) => (
+        {/* Reduce number of Interactive Particles for better performance */}
+        {interactiveElementsRef.current.slice(0, 4).map((el, index) => (
           <InteractiveParticle
             key={`particle-${index}`}
+            className="parallax-element"
             sx={{
               width: el.size,
               height: el.size,
@@ -599,11 +596,11 @@ export default function HomePage() {
               background: 'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.25), rgba(255,255,255,0.08))',
               boxShadow: 'inset 0 0 15px rgba(255,255,255,0.3), 0 0 20px rgba(255,255,255,0.2)',
               transform: `translate3d(
-                ${(mousePosition.x - 0.5) * 20 * el.factor}px, 
-                ${(mousePosition.y - 0.5) * 20 * el.factor}px,
+                calc((var(--mouse-x, 0.5) - 0.5) * ${20 * el.factor}px),
+                calc((var(--mouse-y, 0.5) - 0.5) * ${20 * el.factor}px),
                 0
               )`,
-              transition: `transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)`,
+              transition: 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
               willChange: 'transform',
               zIndex: 1,
               filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.1))',
@@ -613,10 +610,11 @@ export default function HomePage() {
           />
         ))}
         
-        {/* Interactive Squares */}
-        {interactiveElementsRef.current.slice(6).map((el, index) => (
+        {/* Reduce number of Interactive Squares for better performance */}
+        {interactiveElementsRef.current.slice(6, 8).map((el, index) => (
           <InteractiveSquare
             key={`square-${index}`}
+            className="parallax-element"
             sx={{
               width: el.size,
               height: el.size,
@@ -627,11 +625,11 @@ export default function HomePage() {
               background: 'linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.08))',
               boxShadow: 'inset 0 0 15px rgba(255,255,255,0.3), 0 0 20px rgba(255,255,255,0.2)',
               transform: `translate3d(
-                ${(mousePosition.x - 0.5) * 15 * el.factor}px, 
-                ${(mousePosition.y - 0.5) * 15 * el.factor}px,
+                calc((var(--mouse-x, 0.5) - 0.5) * ${15 * el.factor}px),
+                calc((var(--mouse-y, 0.5) - 0.5) * ${15 * el.factor}px),
                 0
               )`,
-              transition: `transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)`,
+              transition: 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
               willChange: 'transform',
               zIndex: 1,
               filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.1))',
@@ -641,8 +639,9 @@ export default function HomePage() {
           />
         ))}
         
-        {/* Larger floating particles */}
+        {/* Reduce number of larger particles */}
         <Particle
+          className="parallax-element"
           sx={{
             width: 300,
             height: 300,
@@ -650,13 +649,18 @@ export default function HomePage() {
             left: '5%',
             opacity: 0.15,
             animationDelay: '0s',
-            transform: `translate3d(${calcOffset(8).x}px, ${calcOffset(8).y}px, 0) rotate(${mousePosition.x * 10}deg)`,
+            transform: `translate3d(
+              calc((var(--mouse-x, 0.5) - 0.5) * ${8 * 15}px),
+              calc((var(--mouse-y, 0.5) - 0.5) * ${8 * 15}px),
+              0
+            ) rotate(calc(var(--mouse-x, 0.5) * 10deg))`,
             willChange: 'transform',
-            transition: `transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)`
+            transition: 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)'
           }}
         />
         
         <Particle
+          className="parallax-element"
           sx={{
             width: 200,
             height: 200,
@@ -664,97 +668,13 @@ export default function HomePage() {
             right: '10%',
             opacity: 0.2,
             animationDelay: '2s',
-            transform: `translate3d(${calcOffset(-6).x}px, ${calcOffset(-6).y}px, 0) rotate(${mousePosition.y * 10}deg)`,
+            transform: `translate3d(
+              calc((var(--mouse-x, 0.5) - 0.5) * ${-6 * 15}px),
+              calc((var(--mouse-y, 0.5) - 0.5) * ${-6 * 15}px),
+              0
+            ) rotate(calc(var(--mouse-y, 0.5) * 10deg))`,
             willChange: 'transform',
-            transition: `transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)`
-          }}
-        />
-        
-        <Particle
-          sx={{
-            width: 150,
-            height: 150,
-            top: '60%',
-            left: '15%',
-            opacity: 0.15,
-            animationDelay: '4s',
-            transform: `translate3d(${calcOffset(10).x}px, ${calcOffset(10).y}px, 0)`,
-            willChange: 'transform',
-            transition: `transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)`
-          }}
-        />
-        
-        {/* Small floating particles */}
-        <Particle
-          sx={{
-            width: 40,
-            height: 40,
-            top: '30%',
-            left: '40%',
-            opacity: 0.25,
-            animation: 'floatParticle 10s infinite ease-in-out',
-            animationDelay: '1s',
-            transform: `translate3d(${calcOffset(-15).x}px, ${calcOffset(-15).y}px, 0)`,
-            willChange: 'transform',
-            transition: `transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)`
-          }}
-        />
-        
-        <Particle
-          sx={{
-            width: 60,
-            height: 60,
-            bottom: '40%',
-            right: '30%',
-            opacity: 0.2,
-            animation: 'floatParticle 12s infinite ease-in-out',
-            animationDelay: '3s',
-            transform: `translate3d(${calcOffset(12).x}px, ${calcOffset(12).y}px, 0)`,
-            willChange: 'transform',
-            transition: `transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)`
-          }}
-        />
-        
-        {/* Floating squares */}
-        <FloatingSquare
-          sx={{
-            width: 100,
-            height: 100,
-            top: '20%',
-            right: '20%',
-            opacity: 0.2,
-            animationDelay: '1s',
-            transform: `translate3d(${calcOffset(-8).x}px, ${calcOffset(-8).y}px, 0) rotate(${mousePosition.x * 15}deg)`,
-            willChange: 'transform',
-            transition: `transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)`
-          }}
-        />
-        
-        <FloatingSquare
-          sx={{
-            width: 70,
-            height: 70,
-            bottom: '25%',
-            left: '25%',
-            opacity: 0.15,
-            animationDelay: '3s',
-            transform: `translate3d(${calcOffset(10).x}px, ${calcOffset(10).y}px, 0) rotate(${mousePosition.y * 15}deg)`,
-            willChange: 'transform',
-            transition: `transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)`
-          }}
-        />
-        
-        <FloatingSquare
-          sx={{
-            width: 120,
-            height: 120,
-            top: '70%',
-            right: '35%',
-            opacity: 0.1,
-            animationDelay: '5s',
-            transform: `translate3d(${calcOffset(-10).x}px, ${calcOffset(-10).y}px, 0) rotate(${(mousePosition.x + mousePosition.y) * 8}deg)`,
-            willChange: 'transform',
-            transition: `transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)`
+            transition: 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)'
           }}
         />
         
@@ -779,12 +699,17 @@ export default function HomePage() {
             }}
           >
             <Box 
+              className="parallax-element"
               sx={{ 
                 flex: 1, 
                 color: 'white', 
                 textAlign: { xs: 'center', md: 'left' },
-                transform: `translate3d(${calcOffset(2).x}px, ${calcOffset(2).y}px, 0)`,
-                transition: 'transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                transform: `translate3d(
+                  calc((var(--mouse-x, 0.5) - 0.5) * ${2 * 15}px),
+                  calc((var(--mouse-y, 0.5) - 0.5) * ${2 * 15}px),
+                  0
+                )`,
+                transition: 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
                 willChange: 'transform'
               }}
             >
@@ -940,14 +865,19 @@ export default function HomePage() {
               )}
             </Box>
             <Box
+              className="parallax-element"
               sx={{
                 flex: 1,
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
                 position: 'relative',
-                transform: `translate3d(${calcOffset(-2).x}px, ${calcOffset(-2).y}px, 0)`,
-                transition: 'transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                transform: `translate3d(
+                  calc((var(--mouse-x, 0.5) - 0.5) * ${-2 * 15}px),
+                  calc((var(--mouse-y, 0.5) - 0.5) * ${-2 * 15}px),
+                  0
+                )`,
+                transition: 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
                 willChange: 'transform'
               }}
             >

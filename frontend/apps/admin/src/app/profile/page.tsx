@@ -7,15 +7,19 @@ import { Button, CircularProgress, Container, Typography, Paper, Box, List, List
 import ProfileForm from '../../components/profile/ProfileForm';
 import { AdminHeader } from '../../components/layout/AdminHeader';
 import { Add as AddIcon, Edit as EditIcon, Check as CheckIcon } from '@mui/icons-material';
+import { useRouter } from 'next/navigation';
+import { AuthService } from '@lib/services/auth.service';
 
 const emptyProfile: Profile = {
   name: '',
   highlightedText: '',
   description: '',
-  socialLinks: []
+  socialLinks: [],
+  active: false
 };
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [activeProfile, setActiveProfile] = useState<Profile | null>(null);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
@@ -25,14 +29,13 @@ export default function ProfilePage() {
   const [activating, setActivating] = useState(false);
 
   const profileService = new ProfileService();
+  const authService = new AuthService();
 
   useEffect(() => {
     // Verificar autenticação
-    const authService = new (require('@lib/services/auth.service').AuthService)();
     if (!authService.isAuthenticated()) {
-      const { useRouter } = require('next/navigation');
-      const router = useRouter();
       router.push('/login');
+      return;
     }
     
     const fetchProfiles = async () => {
@@ -65,7 +68,7 @@ export default function ProfilePage() {
     };
 
     fetchProfiles();
-  }, []);
+  }, [router]);
 
   const handleSave = async (updatedProfile: Profile) => {
     try {

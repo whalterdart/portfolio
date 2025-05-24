@@ -14,10 +14,30 @@ import {
   alpha
 } from '@mui/material';
 import { GitHub as GitHubIcon, Launch as LaunchIcon } from '@mui/icons-material';
+import Link from 'next/link';
 
 interface ProjectCardProps {
   project: Project;
 }
+
+// Helper function to validate image URLs - same as in TimelineComponent
+const isValidImageUrl = (url: string): boolean => {
+  if (!url) return false;
+  
+  try {
+    // Check if it's a relative URL starting with "/"
+    if (url.startsWith('/')) return true;
+    
+    // Check if it's an absolute URL (http:// or https://)
+    const urlObj = new URL(url);
+    return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+  } catch (e) {
+    return false;
+  }
+};
+
+// Default fallback image - same as in TimelineComponent
+const DEFAULT_IMAGE = '/project-placeholder.svg';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -46,7 +66,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
       <CardMedia
         component="img"
         height="200"
-        image={project.imageUrl}
+        image={isValidImageUrl(project.imageUrl) ? project.imageUrl : DEFAULT_IMAGE}
         alt={project.title}
         sx={{ objectFit: 'cover' }}
       />
@@ -75,29 +95,32 @@ export function ProjectCard({ project }: ProjectCardProps) {
 
       <CardActions sx={{ p: 2, pt: 0 }}>
         {project.githubUrl && (
-          <ActionButton
-            href={project.githubUrl}
-            rel="noopener noreferrer"
-            startIcon={<GitHubIcon />}
-            size="small"
-            variant="outlined"
-            color="primary"
-          >
-            GitHub
-          </ActionButton>
+          <Link href={project.githubUrl} passHref legacyBehavior>
+            <a target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+              <ActionButton
+                startIcon={<GitHubIcon />}
+                size="small"
+                variant="outlined"
+                color="primary"
+              >
+                GitHub
+              </ActionButton>
+            </a>
+          </Link>
         )}
         {project.liveUrl && (
-          <ActionButton
-            href={project.liveUrl}
-            rel="noopener noreferrer"
-            startIcon={<LaunchIcon />}
-            size="small"
-            variant="contained"
-            color="primary"
-            sx={{ ml: 1 }}
-          >
-            Demo
-          </ActionButton>
+          <Link href={project.liveUrl} passHref legacyBehavior>
+            <a target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', marginLeft: '8px' }}>
+              <ActionButton
+                startIcon={<LaunchIcon />}
+                size="small"
+                variant="contained"
+                color="primary"
+              >
+                Demo
+              </ActionButton>
+            </a>
+          </Link>
         )}
       </CardActions>
     </StyledCard>

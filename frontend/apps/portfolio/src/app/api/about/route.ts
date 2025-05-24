@@ -76,5 +76,5 @@ export async function DELETE(req: NextRequest) {
   const pathParts = url.pathname.split('/');
   const id = pathParts[pathParts.length - 1];
   
-  return adapter.handleDelete(id, req);
+  return adapter.handleDelete(id);
 }

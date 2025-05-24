@@ -276,17 +276,28 @@ export function AboutForm({ aboutId, onSuccess }: AboutFormProps) {
         });
       }
 
-      // Process experience data - ensure endDate is null when current is true
+      // Process experience items to properly handle current/endDate values
       const processedExperience = aboutData.experience.map(exp => {
+        // If current is true, ensure endDate is undefined (not null)
         if (exp.current) {
-          return { ...exp, endDate: null };
+          return {
+            ...exp,
+            endDate: undefined
+          };
+        }
+        // If endDate is null, convert it to undefined to match the type
+        if (exp.endDate === null) {
+          return {
+            ...exp,
+            endDate: undefined
+          };
         }
         return exp;
       });
 
-      // Ensure arrays are initialized before saving
-      const dataToSave = {
-        ...aboutData,
+      const dataToSave: Partial<About> = {
+        title: aboutData.title,
+        description: aboutData.description,
         skills: aboutData.skills || [],
         education: aboutData.education || [],
         experience: processedExperience,

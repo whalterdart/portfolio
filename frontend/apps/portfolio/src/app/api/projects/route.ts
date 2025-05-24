@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { ProjectService } from '../../../../../../lib/services/project.service';
 import { ApiRouteAdapter } from '../../../../../../lib/adapters/api-route.adapter';
 

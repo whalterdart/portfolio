@@ -5,7 +5,7 @@ import axios from 'axios';
 
 const aboutService = new AboutService();
 const adapter = new ApiRouteAdapter(aboutService);
-const API_URL = 'http://localhost:3001/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 export async function GET(req: NextRequest) {
   console.log('Admin API Route - GET /api/about received');
